@@ -249,6 +249,23 @@
       font-weight: 720;
     }
 
+    .next-call {
+      border-top: 1px solid rgba(255,255,255,.10);
+      padding-top: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--muted);
+      font-size: .9rem;
+    }
+
+    .next-call strong {
+      color: var(--text);
+      text-align: right;
+      overflow-wrap: anywhere;
+    }
+
     .progress-wrap {
       display: grid;
       gap: 8px;
@@ -458,8 +475,13 @@
             <button id="pauseBtn" type="button">Pauze</button>
           </div>
           <div class="actions">
-            <button id="prevBtn" type="button">Vorige</button>
+            <button id="earlierBtn" type="button">Call eerder</button>
+            <button id="laterBtn" type="button">Call later</button>
             <button id="sayBtn" type="button">Zeg call</button>
+          </div>
+          <div class="actions">
+            <button id="prevBtn" type="button">Vorige</button>
+            <button id="nextBtn" type="button">Volgende</button>
             <button id="resetBtn" type="button">Reset</button>
           </div>
         </section>
@@ -478,6 +500,10 @@
             <div class="corner-name" id="cornerName">La Source</div>
           </div>
           <div class="call-text" id="callText">Tik Start S/F als je de lijn passeert.</div>
+          <div class="next-call">
+            <span>Daarna</span>
+            <strong id="afterCorner">Eau Rouge</strong>
+          </div>
           <div class="progress-wrap">
             <div class="progress-bar" aria-hidden="true"><span id="lapProgress"></span></div>
           </div>
@@ -669,11 +695,14 @@
       var els = {};
       var ids = [
         "lapMin", "lapSec", "leadSec", "car", "coachStyle", "learnLap", "voiceOn",
-        "repeatCall", "startBtn", "syncBtn", "pauseBtn", "prevBtn", "sayBtn",
-        "resetBtn", "phaseLabel", "cornerName", "callText", "lapProgress",
+        "repeatCall", "startBtn", "syncBtn", "pauseBtn", "earlierBtn", "laterBtn",
+        "prevBtn", "nextBtn", "sayBtn", "resetBtn", "phaseLabel", "cornerName",
+        "callText", "afterCorner", "lapProgress",
         "lapCount", "elapsedTime", "nextIn", "noteList", "coachHint",
         "pwaStatus", "trackProgressPath"
       ];
+
+      var settingsKey = "acc-spa-coach-settings-v1";
 
       function numberValue(id, fallback) {
         var raw = String(els[id].value || "").replace(",", ".");
@@ -710,6 +739,38 @@
         return selected[0];
       }
 
+      function saveSettings() {
+        try {
+          var settings = {
+            lapMin: els.lapMin.value,
+            lapSec: els.lapSec.value,
+            leadSec: els.leadSec.value,
+            car: els.car.value,
+            coachStyle: els.coachStyle.value,
+            learnLap: els.learnLap.checked,
+            voiceOn: els.voiceOn.checked,
+            repeatCall: els.repeatCall.checked
+          };
+          localStorage.setItem(settingsKey, JSON.stringify(settings));
+        } catch (error) {
+          // Storage can be unavailable in private browsing.
+        }
+      }
+
+      function loadSettings() {
+        try {
+          var saved = JSON.parse(localStorage.getItem(settingsKey) || "{}");
+          ["lapMin", "lapSec", "leadSec", "car", "coachStyle"].forEach(function (id) {
+            if (saved[id] !== undefined && els[id]) els[id].value = saved[id];
+          });
+          ["learnLap", "voiceOn", "repeatCall"].forEach(function (id) {
+            if (saved[id] !== undefined && els[id]) els[id].checked = !!saved[id];
+          });
+        } catch (error) {
+          // Keep defaults when stored settings are not readable.
+        }
+      }
+
       function formatTime(ms) {
         if (!Number.isFinite(ms) || ms < 0) return "--";
         var total = Math.floor(ms / 1000);
@@ -739,11 +800,21 @@
         return { index: 0, inMs: lap - positionMs + notes[0].at * lap };
       }
 
+      function afterIndex(index) {
+        return (index + 1) % notes.length;
+      }
+
       function noteText(note) {
         var profile = selectedProfile();
         var gear = note.gear[profile] || note.gear.gt3;
         var base = note[els.coachStyle.value] || note.direct;
         return "Versnelling " + gear + ". " + base + " Kerb: " + note.curb;
+      }
+
+      function shortNoteText(note) {
+        var profile = selectedProfile();
+        var gear = note.gear[profile] || note.gear.gt3;
+        return "Nu " + note.corner + ". Versnelling " + gear + ".";
       }
 
       function speak(text, force) {
@@ -784,9 +855,11 @@
         state.activeIndex = displayIndex;
         els.cornerName.textContent = displayNote.corner;
         els.callText.textContent = noteText(displayNote);
+        els.afterCorner.textContent = notes[afterIndex(displayIndex)].corner;
         els.lapCount.textContent = state.running ? String(state.lapNumber) : "--";
         els.elapsedTime.textContent = state.running ? formatTime(position) : "--";
         els.nextIn.textContent = state.running ? Math.max(0, Math.ceil(next.inMs / 1000)) + "s" : "--";
+        els.phaseLabel.textContent = state.running && next.inMs <= 1400 ? "Nu" : "Volgende bocht";
         els.lapProgress.style.width = Math.min(100, (position / lap) * 100).toFixed(1) + "%";
         els.trackProgressPath.style.strokeDasharray = Math.round((position / lap) * 1000) + " 1000";
 
@@ -795,14 +868,21 @@
         });
 
         if (state.running && !state.paused) {
-          var callWindow = next.inMs <= leadMs() || els.repeatCall.checked;
-          var spokenKey = state.lapNumber + "-" + next.index;
-          if (callWindow && !state.spoken[spokenKey]) {
+          var stage = "";
+          if (els.repeatCall.checked && next.inMs <= 1400) {
+            stage = "now";
+          } else if (next.inMs <= leadMs()) {
+            stage = "lead";
+          }
+
+          var spokenKey = state.lapNumber + "-" + next.index + "-" + stage;
+          if (stage && !state.spoken[spokenKey]) {
             state.spoken[spokenKey] = true;
             state.activeIndex = next.index;
             els.cornerName.textContent = note.corner;
             els.callText.textContent = noteText(note);
-            speak(note.corner + ". " + noteText(note), false);
+            els.afterCorner.textContent = notes[afterIndex(next.index)].corner;
+            speak(stage === "now" ? shortNoteText(note) : note.corner + ". " + noteText(note), false);
           }
         }
       }
@@ -817,7 +897,7 @@
             state.lapNumber = autoLapNumber;
           }
         }
-        updateDisplay(now, false);
+        if (state.running) updateDisplay(now, false);
         window.requestAnimationFrame(tick);
       }
 
@@ -846,6 +926,7 @@
           var seconds = actual / 1000;
           els.lapMin.value = Math.floor(seconds / 60);
           els.lapSec.value = (seconds % 60).toFixed(1);
+          saveSettings();
         }
 
         state.lapStartedAt = now;
@@ -888,13 +969,22 @@
         els.phaseLabel.textContent = "Volgende bocht";
         els.cornerName.textContent = "La Source";
         els.callText.textContent = "Tik Start S/F als je de lijn passeert.";
+        els.afterCorner.textContent = "Eau Rouge";
         updateDisplay(Date.now(), true);
+        els.phaseLabel.textContent = "Volgende bocht";
+        els.cornerName.textContent = "La Source";
+        els.callText.textContent = "Tik Start S/F als je de lijn passeert.";
+        els.afterCorner.textContent = "Eau Rouge";
       }
 
       function bind() {
-        ["lapMin", "lapSec", "leadSec", "car", "coachStyle"].forEach(function (id) {
-          els[id].addEventListener("input", function () { updateDisplay(Date.now(), false); });
+        ["lapMin", "lapSec", "leadSec", "car", "coachStyle", "learnLap", "voiceOn", "repeatCall"].forEach(function (id) {
+          els[id].addEventListener("input", function () {
+            saveSettings();
+            updateDisplay(Date.now(), false);
+          });
           els[id].addEventListener("change", function () {
+            saveSettings();
             renderNotes();
             updateDisplay(Date.now(), false);
           });
@@ -912,11 +1002,28 @@
           state.activeIndex = (state.activeIndex + notes.length - 1) % notes.length;
           updateDisplay(Date.now(), true);
         });
+        els.nextBtn.addEventListener("click", function () {
+          state.activeIndex = afterIndex(state.activeIndex);
+          updateDisplay(Date.now(), true);
+        });
+        els.earlierBtn.addEventListener("click", function () {
+          els.leadSec.value = Math.min(14, numberValue("leadSec", 6) + 1);
+          saveSettings();
+          updateDisplay(Date.now(), false);
+          speak("Calls eerder.", false);
+        });
+        els.laterBtn.addEventListener("click", function () {
+          els.leadSec.value = Math.max(2, numberValue("leadSec", 6) - 1);
+          saveSettings();
+          updateDisplay(Date.now(), false);
+          speak("Calls later.", false);
+        });
       }
 
       function init() {
         ids.forEach(function (id) { els[id] = document.getElementById(id); });
         fillCars();
+        loadSettings();
         renderNotes();
         bind();
         resetCoach();
