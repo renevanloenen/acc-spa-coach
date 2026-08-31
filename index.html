@@ -1,0 +1,866 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#111827">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Spa Coach">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <title>ACC Spa Coach</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0b1017;
+      --panel: #141b24;
+      --panel-2: #1d2632;
+      --text: #f6f8fa;
+      --muted: #a6b1bf;
+      --line: #303b49;
+      --accent: #2dd4bf;
+      --amber: #fbbf24;
+      --red: #fb7185;
+      --green: #86efac;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(125deg, rgba(45, 212, 191, .12), transparent 34%),
+        linear-gradient(180deg, #101827 0%, var(--bg) 56%, #070a0e 100%);
+      color: var(--text);
+    }
+
+    main {
+      width: min(1040px, 100%);
+      margin: 0 auto;
+      padding: max(18px, env(safe-area-inset-top)) 14px max(22px, env(safe-area-inset-bottom));
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      margin: 8px 0 14px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .app-icon {
+      width: 50px;
+      height: 50px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(145deg, #101827, #164e63);
+      border: 1px solid rgba(255,255,255,.12);
+      color: var(--accent);
+      font-weight: 900;
+      letter-spacing: 0;
+      flex: 0 0 auto;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.45rem, 6vw, 2.35rem);
+      letter-spacing: 0;
+      line-height: 1.05;
+    }
+
+    .subtitle {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: .94rem;
+      line-height: 1.3;
+    }
+
+    .status-pill {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 8px 11px;
+      color: var(--muted);
+      background: rgba(20,27,36,.82);
+      font-size: .82rem;
+      white-space: nowrap;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, .88fr) minmax(340px, 1.12fr);
+      gap: 14px;
+      align-items: start;
+    }
+
+    section {
+      background: rgba(20, 27, 36, .95);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      box-shadow: 0 18px 50px rgba(0,0,0,.20);
+    }
+
+    section + section {
+      margin-top: 14px;
+    }
+
+    h2 {
+      margin: 0 0 12px;
+      font-size: 1rem;
+      letter-spacing: 0;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 11px;
+    }
+
+    .grid.three {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+      font-size: .86rem;
+      min-width: 0;
+    }
+
+    input,
+    select {
+      width: 100%;
+      min-height: 44px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #0e141c;
+      color: var(--text);
+      padding: 10px 11px;
+      font: inherit;
+      outline: none;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(45,212,191,.12);
+    }
+
+    .check {
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #101720;
+      color: var(--text);
+      padding: 9px 10px;
+    }
+
+    .check input {
+      width: 22px;
+      min-height: 22px;
+      height: 22px;
+      accent-color: var(--accent);
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 9px;
+      margin-top: 12px;
+    }
+
+    button {
+      min-height: 46px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #101720;
+      color: var(--text);
+      padding: 0 12px;
+      font: inherit;
+      font-weight: 780;
+    }
+
+    button.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #042f2e;
+    }
+
+    button.warning {
+      border-color: rgba(251,191,36,.55);
+      color: #fde68a;
+    }
+
+    .coach-main {
+      position: sticky;
+      top: 12px;
+    }
+
+    .call-card {
+      min-height: 244px;
+      border: 1px solid rgba(45,212,191,.42);
+      border-radius: 8px;
+      background: linear-gradient(160deg, rgba(45,212,191,.15), rgba(29,38,50,.98));
+      padding: 16px;
+      display: grid;
+      align-content: space-between;
+      gap: 18px;
+    }
+
+    .corner-label {
+      color: var(--muted);
+      font-size: .78rem;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .corner-name {
+      margin-top: 7px;
+      color: var(--accent);
+      font-size: clamp(2.1rem, 10vw, 4.1rem);
+      font-weight: 900;
+      letter-spacing: 0;
+      line-height: .95;
+      overflow-wrap: anywhere;
+    }
+
+    .call-text {
+      color: var(--text);
+      font-size: clamp(1.05rem, 4.5vw, 1.55rem);
+      line-height: 1.26;
+      font-weight: 720;
+    }
+
+    .progress-wrap {
+      display: grid;
+      gap: 8px;
+    }
+
+    .progress-bar {
+      height: 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      overflow: hidden;
+      background: #0e141c;
+    }
+
+    .progress-bar span {
+      display: block;
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--amber));
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 9px;
+      margin-top: 12px;
+    }
+
+    .stat {
+      min-height: 78px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      padding: 10px;
+      background: #101720;
+    }
+
+    .stat span {
+      display: block;
+      color: var(--muted);
+      font-size: .74rem;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .stat strong {
+      display: block;
+      margin-top: 8px;
+      font-size: 1.18rem;
+      overflow-wrap: anywhere;
+    }
+
+    .track-card {
+      margin-top: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #101720;
+      overflow: hidden;
+    }
+
+    svg {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    .track-line {
+      fill: none;
+      stroke: #3b4655;
+      stroke-width: 13;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .track-progress {
+      fill: none;
+      stroke: var(--accent);
+      stroke-width: 7;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-dasharray: 0 1000;
+    }
+
+    .note-list {
+      display: grid;
+      gap: 7px;
+      margin-top: 10px;
+    }
+
+    .note-row {
+      display: grid;
+      grid-template-columns: 72px minmax(0, 1fr);
+      gap: 10px;
+      border-bottom: 1px solid var(--line);
+      padding: 9px 0;
+      color: var(--muted);
+      font-size: .88rem;
+    }
+
+    .note-row:last-child {
+      border-bottom: 0;
+    }
+
+    .note-row.active {
+      color: var(--text);
+    }
+
+    .note-row.active strong {
+      color: var(--accent);
+    }
+
+    .hint {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: .83rem;
+      line-height: 1.4;
+    }
+
+    @media (max-width: 840px) {
+      main {
+        padding-left: 12px;
+        padding-right: 12px;
+      }
+
+      header {
+        align-items: flex-start;
+      }
+
+      .status-pill {
+        display: none;
+      }
+
+      .layout,
+      .grid,
+      .grid.three,
+      .actions,
+      .stats {
+        grid-template-columns: 1fr;
+      }
+
+      .coach-main {
+        position: static;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="brand">
+        <div class="app-icon" aria-hidden="true">SPA</div>
+        <div>
+          <h1>ACC Spa Coach</h1>
+          <div class="subtitle">Offline pacenotes voor Spa-Francorchamps.</div>
+        </div>
+      </div>
+      <div class="status-pill" id="pwaStatus">Offline klaar</div>
+    </header>
+
+    <div class="layout">
+      <div>
+        <section>
+          <h2>Ronde</h2>
+          <div class="grid three">
+            <label>
+              Gem. min.
+              <input id="lapMin" type="number" min="0" step="1" value="2" inputmode="numeric">
+            </label>
+            <label>
+              Gem. sec.
+              <input id="lapSec" type="number" min="0" max="59.999" step="0.001" value="22" inputmode="decimal">
+            </label>
+            <label>
+              Call vooruit
+              <input id="leadSec" type="number" min="2" max="14" step="1" value="6" inputmode="numeric">
+            </label>
+          </div>
+          <div class="grid" style="margin-top:11px">
+            <label>
+              Coach stijl
+              <select id="coachStyle">
+                <option value="safe">Rustig</option>
+                <option value="direct" selected>Direct</option>
+                <option value="attack">Aanvallen</option>
+              </select>
+            </label>
+            <label class="check">
+              Leer van Sync S/F
+              <input id="learnLap" type="checkbox" checked>
+            </label>
+          </div>
+          <div class="grid" style="margin-top:11px">
+            <label class="check">
+              Stem aan
+              <input id="voiceOn" type="checkbox" checked>
+            </label>
+            <label class="check">
+              Herhaal call
+              <input id="repeatCall" type="checkbox">
+            </label>
+          </div>
+          <div class="actions">
+            <button class="primary" id="startBtn" type="button">Start S/F</button>
+            <button class="warning" id="syncBtn" type="button">Sync S/F</button>
+            <button id="pauseBtn" type="button">Pauze</button>
+          </div>
+          <div class="actions">
+            <button id="prevBtn" type="button">Vorige</button>
+            <button id="sayBtn" type="button">Zeg call</button>
+            <button id="resetBtn" type="button">Reset</button>
+          </div>
+        </section>
+
+        <section>
+          <h2>Spa Notes</h2>
+          <div class="note-list" id="noteList"></div>
+        </section>
+      </div>
+
+      <section class="coach-main">
+        <h2>Coach</h2>
+        <div class="call-card">
+          <div>
+            <div class="corner-label" id="phaseLabel">Volgende bocht</div>
+            <div class="corner-name" id="cornerName">La Source</div>
+          </div>
+          <div class="call-text" id="callText">Tik Start S/F als je de lijn passeert.</div>
+          <div class="progress-wrap">
+            <div class="progress-bar" aria-hidden="true"><span id="lapProgress"></span></div>
+          </div>
+        </div>
+
+        <div class="stats">
+          <div class="stat">
+            <span>Ronde</span>
+            <strong id="lapCount">--</strong>
+          </div>
+          <div class="stat">
+            <span>In ronde</span>
+            <strong id="elapsedTime">--</strong>
+          </div>
+          <div class="stat">
+            <span>Call in</span>
+            <strong id="nextIn">--</strong>
+          </div>
+        </div>
+
+        <div class="track-card">
+          <svg viewBox="0 0 520 300" role="img" aria-label="Spa track map">
+            <path class="track-line" d="M145 252 C95 230 74 194 108 168 C134 148 181 154 201 121 C222 86 181 60 212 34 C248 4 322 22 354 54 C385 85 366 122 406 142 C458 168 465 229 413 249 C362 268 315 226 268 237 C221 248 186 270 145 252 Z"></path>
+            <path id="trackProgressPath" class="track-progress" pathLength="1000" d="M145 252 C95 230 74 194 108 168 C134 148 181 154 201 121 C222 86 181 60 212 34 C248 4 322 22 354 54 C385 85 366 122 406 142 C458 168 465 229 413 249 C362 268 315 226 268 237 C221 248 186 270 145 252 Z"></path>
+            <circle cx="145" cy="252" r="7" fill="#fbbf24"></circle>
+            <text x="158" y="257" fill="#f6f8fa" font-size="16" font-weight="700">S/F</text>
+          </svg>
+        </div>
+        <div class="hint" id="coachHint">Deze eerste versie gebruikt timing. Tik Sync S/F bij elke nieuwe ronde voor betere calls.</div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    (function () {
+      "use strict";
+
+      var notes = [
+        {
+          at: 0.015,
+          corner: "La Source",
+          safe: "Rem vroeg en recht. Tweede versnelling, late apex, rustig op gas.",
+          direct: "Rem hard bij 100. Tweede versnelling, late apex, vroeg rechtzetten.",
+          attack: "Laat remmen bij 100. Trail naar de apex, vroeg openen voor Eau Rouge."
+        },
+        {
+          at: 0.105,
+          corner: "Eau Rouge",
+          safe: "Kleine lift als nodig. Links raken, auto rustig houden.",
+          direct: "Vloeiend insturen. Geen harde kerb, blik al omhoog naar Raidillon.",
+          attack: "Commit. Minimale lift, auto laten lopen, stuur niet corrigeren."
+        },
+        {
+          at: 0.145,
+          corner: "Raidillon",
+          safe: "Rechts over de top, lift als de auto licht wordt.",
+          direct: "Rechts over de top, vroeg volgas zodra de auto staat.",
+          attack: "Volhouden over de top. Gebruik hele baan links bij exit."
+        },
+        {
+          at: 0.255,
+          corner: "Les Combes",
+          safe: "Rem bij 120. Rustig links-rechts, exit belangrijker dan entry.",
+          direct: "Rem bij 100. Recht afremmen, links clippen, snel naar rechts.",
+          attack: "Laat remmen. Kort roteren, kerb gebruiken, exit niet knijpen."
+        },
+        {
+          at: 0.305,
+          corner: "Malmedy",
+          safe: "Vroeg insturen, geen overstuur forceren.",
+          direct: "Auto laten rollen, korte apex, meteen naar rechts voorbereiden.",
+          attack: "Veel minimumsnelheid, vroeg gas, baanbreedte pakken."
+        },
+        {
+          at: 0.365,
+          corner: "Bruxelles",
+          safe: "Lang remmen. Geduld, niet te vroeg op gas.",
+          direct: "Trail brake naar binnen. Late apex, auto laten draaien.",
+          attack: "Diep erin, rem loslaten op grip, exit strak houden."
+        },
+        {
+          at: 0.435,
+          corner: "Pouhon",
+          safe: "Lichte rem of lift. Een vloeiende lijn, geen ruk aan stuur.",
+          direct: "Korte rem. Vroeg insturen, gas terug opbouwen in deel twee.",
+          attack: "Snelle lift. Veel apex-snelheid, auto tot buiten laten lopen."
+        },
+        {
+          at: 0.548,
+          corner: "Fagnes",
+          safe: "Rem recht. Links-rechts netjes, kerbs voorzichtig.",
+          direct: "Rem bij 80. Links aanvallen, rechts openen voor Campus.",
+          attack: "Laat remmen, agressief roteren, meteen grip zoeken voor exit."
+        },
+        {
+          at: 0.602,
+          corner: "Campus",
+          safe: "Rustig op gas, exit niet overschrijden.",
+          direct: "Vroeg gas als de neus wijst. Gebruik hele exit.",
+          attack: "Auto snel recht, gas hard opbouwen naar Stavelot."
+        },
+        {
+          at: 0.690,
+          corner: "Stavelot",
+          safe: "Lift of tik rem. Laat apex, exit is alles.",
+          direct: "Korte rem. Late apex, zo vroeg mogelijk volgas.",
+          attack: "Minimum rem. Vroeg op power, exit volledig gebruiken."
+        },
+        {
+          at: 0.808,
+          corner: "Blanchimont",
+          safe: "Kleine lift mag. Auto stabiel houden, kerb vermijden.",
+          direct: "Volgas als stabiel. Eén stuurbeweging, niet corrigeren.",
+          attack: "Commit volgas. Zacht insturen en baanbreedte benutten."
+        },
+        {
+          at: 0.925,
+          corner: "Bus Stop",
+          safe: "Rem vroeg en recht. Eerste kerb zacht, exit schoon.",
+          direct: "Rem hard bij 150. Rechts-links, korte rotatie, vroeg gas.",
+          attack: "Laat remmen, kerb pakken, auto snel recht voor start/finish."
+        }
+      ];
+
+      var state = {
+        running: false,
+        paused: false,
+        lapStartedAt: 0,
+        pauseStartedAt: 0,
+        pausedMs: 0,
+        lapNumber: 1,
+        activeIndex: 0,
+        spoken: {}
+      };
+
+      var els = {};
+      var ids = [
+        "lapMin", "lapSec", "leadSec", "coachStyle", "learnLap", "voiceOn",
+        "repeatCall", "startBtn", "syncBtn", "pauseBtn", "prevBtn", "sayBtn",
+        "resetBtn", "phaseLabel", "cornerName", "callText", "lapProgress",
+        "lapCount", "elapsedTime", "nextIn", "noteList", "coachHint",
+        "pwaStatus", "trackProgressPath"
+      ];
+
+      function numberValue(id, fallback) {
+        var raw = String(els[id].value || "").replace(",", ".");
+        var value = Number(raw);
+        return Number.isFinite(value) ? value : fallback;
+      }
+
+      function lapMs() {
+        var seconds = numberValue("lapMin", 0) * 60 + numberValue("lapSec", 0);
+        return Math.max(60, seconds) * 1000;
+      }
+
+      function leadMs() {
+        return Math.max(2, numberValue("leadSec", 6)) * 1000;
+      }
+
+      function formatTime(ms) {
+        if (!Number.isFinite(ms) || ms < 0) return "--";
+        var total = Math.floor(ms / 1000);
+        var minutes = Math.floor(total / 60);
+        var seconds = total % 60;
+        return minutes + ":" + String(seconds).padStart(2, "0");
+      }
+
+      function currentElapsed(now) {
+        if (!state.running) return 0;
+        var extraPause = state.paused ? now - state.pauseStartedAt : 0;
+        return Math.max(0, now - state.lapStartedAt - state.pausedMs - extraPause);
+      }
+
+      function currentLapPosition(now) {
+        return currentElapsed(now) % lapMs();
+      }
+
+      function findNextNote(positionMs) {
+        var lap = lapMs();
+        for (var i = 0; i < notes.length; i++) {
+          var noteMs = notes[i].at * lap;
+          if (noteMs >= positionMs) {
+            return { index: i, inMs: noteMs - positionMs };
+          }
+        }
+        return { index: 0, inMs: lap - positionMs + notes[0].at * lap };
+      }
+
+      function noteText(note) {
+        return note[els.coachStyle.value] || note.direct;
+      }
+
+      function speak(text, force) {
+        if (!force && !els.voiceOn.checked) return;
+        if (!("speechSynthesis" in window)) return;
+        window.speechSynthesis.cancel();
+        var utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = "nl-NL";
+        utterance.rate = 1.04;
+        utterance.pitch = 1;
+        window.speechSynthesis.speak(utterance);
+      }
+
+      function renderNotes() {
+        els.noteList.innerHTML = "";
+        notes.forEach(function (note, index) {
+          var row = document.createElement("div");
+          row.className = "note-row";
+          row.dataset.index = String(index);
+          row.innerHTML = "<strong>" + Math.round(note.at * 100) + "%</strong><div>" + note.corner + "</div>";
+          row.addEventListener("click", function () {
+            state.activeIndex = index;
+            updateDisplay(Date.now(), true);
+            speak(note.corner + ". " + noteText(note), true);
+          });
+          els.noteList.appendChild(row);
+        });
+      }
+
+      function updateDisplay(now, manual) {
+        var position = currentLapPosition(now);
+        var lap = lapMs();
+        var next = findNextNote(position);
+        var note = notes[next.index];
+        var displayIndex = manual ? state.activeIndex : next.index;
+        var displayNote = notes[displayIndex];
+
+        state.activeIndex = displayIndex;
+        els.cornerName.textContent = displayNote.corner;
+        els.callText.textContent = noteText(displayNote);
+        els.lapCount.textContent = state.running ? String(state.lapNumber) : "--";
+        els.elapsedTime.textContent = state.running ? formatTime(position) : "--";
+        els.nextIn.textContent = state.running ? Math.max(0, Math.ceil(next.inMs / 1000)) + "s" : "--";
+        els.lapProgress.style.width = Math.min(100, (position / lap) * 100).toFixed(1) + "%";
+        els.trackProgressPath.style.strokeDasharray = Math.round((position / lap) * 1000) + " 1000";
+
+        document.querySelectorAll(".note-row").forEach(function (row) {
+          row.classList.toggle("active", Number(row.dataset.index) === next.index);
+        });
+
+        if (state.running && !state.paused) {
+          var callWindow = next.inMs <= leadMs() || els.repeatCall.checked;
+          var spokenKey = state.lapNumber + "-" + next.index;
+          if (callWindow && !state.spoken[spokenKey]) {
+            state.spoken[spokenKey] = true;
+            state.activeIndex = next.index;
+            els.cornerName.textContent = note.corner;
+            els.callText.textContent = noteText(note);
+            speak(note.corner + ". " + noteText(note), false);
+          }
+        }
+      }
+
+      function tick() {
+        var now = Date.now();
+        if (state.running && !state.paused) {
+          var elapsed = currentElapsed(now);
+          var lap = lapMs();
+          var autoLapNumber = Math.floor(elapsed / lap) + 1;
+          if (autoLapNumber > state.lapNumber) {
+            state.lapNumber = autoLapNumber;
+          }
+        }
+        updateDisplay(now, false);
+        window.requestAnimationFrame(tick);
+      }
+
+      function startCoach() {
+        state.running = true;
+        state.paused = false;
+        state.lapStartedAt = Date.now();
+        state.pauseStartedAt = 0;
+        state.pausedMs = 0;
+        state.lapNumber = 1;
+        state.spoken = {};
+        els.phaseLabel.textContent = "Volgende bocht";
+        updateDisplay(Date.now(), false);
+        speak("Coach gestart. La Source komt eraan.", false);
+      }
+
+      function syncLap() {
+        var now = Date.now();
+        if (!state.running) {
+          startCoach();
+          return;
+        }
+
+        var actual = now - state.lapStartedAt - state.pausedMs;
+        if (els.learnLap.checked && actual > 60000) {
+          var seconds = actual / 1000;
+          els.lapMin.value = Math.floor(seconds / 60);
+          els.lapSec.value = (seconds % 60).toFixed(1);
+        }
+
+        state.lapStartedAt = now;
+        state.pausedMs = 0;
+        state.pauseStartedAt = 0;
+        state.paused = false;
+        state.lapNumber += 1;
+        state.spoken = {};
+        updateDisplay(now, false);
+        speak("Nieuwe ronde. La Source.", false);
+      }
+
+      function pauseCoach() {
+        if (!state.running) return;
+        if (state.paused) {
+          state.pausedMs += Date.now() - state.pauseStartedAt;
+          state.pauseStartedAt = 0;
+          state.paused = false;
+          els.pauseBtn.textContent = "Pauze";
+          speak("Coach hervat.", false);
+          return;
+        }
+        state.paused = true;
+        state.pauseStartedAt = Date.now();
+        els.pauseBtn.textContent = "Verder";
+        if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+      }
+
+      function resetCoach() {
+        state.running = false;
+        state.paused = false;
+        state.lapStartedAt = 0;
+        state.pauseStartedAt = 0;
+        state.pausedMs = 0;
+        state.lapNumber = 1;
+        state.activeIndex = 0;
+        state.spoken = {};
+        els.pauseBtn.textContent = "Pauze";
+        if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+        els.phaseLabel.textContent = "Volgende bocht";
+        els.cornerName.textContent = "La Source";
+        els.callText.textContent = "Tik Start S/F als je de lijn passeert.";
+        updateDisplay(Date.now(), true);
+      }
+
+      function bind() {
+        ["lapMin", "lapSec", "leadSec", "coachStyle"].forEach(function (id) {
+          els[id].addEventListener("input", function () { updateDisplay(Date.now(), false); });
+          els[id].addEventListener("change", function () { updateDisplay(Date.now(), false); });
+        });
+
+        els.startBtn.addEventListener("click", startCoach);
+        els.syncBtn.addEventListener("click", syncLap);
+        els.pauseBtn.addEventListener("click", pauseCoach);
+        els.resetBtn.addEventListener("click", resetCoach);
+        els.sayBtn.addEventListener("click", function () {
+          var note = notes[state.activeIndex];
+          speak(note.corner + ". " + noteText(note), true);
+        });
+        els.prevBtn.addEventListener("click", function () {
+          state.activeIndex = (state.activeIndex + notes.length - 1) % notes.length;
+          updateDisplay(Date.now(), true);
+        });
+      }
+
+      function init() {
+        ids.forEach(function (id) { els[id] = document.getElementById(id); });
+        renderNotes();
+        bind();
+        resetCoach();
+        tick();
+
+        if ("serviceWorker" in navigator) {
+          var refreshing = false;
+          navigator.serviceWorker.addEventListener("controllerchange", function () {
+            if (refreshing) return;
+            refreshing = true;
+            window.location.reload();
+          });
+
+          navigator.serviceWorker.register("sw.js").then(function (registration) {
+            registration.update();
+            els.pwaStatus.textContent = "Offline klaar";
+          }).catch(function () {
+            els.pwaStatus.textContent = "Online modus";
+          });
+        }
+      }
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", init);
+      } else {
+        init();
+      }
+    }());
+  </script>
+</body>
+</html>
