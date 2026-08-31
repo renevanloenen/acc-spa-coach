@@ -1,7 +1,7 @@
 {
-  "name": "ACC Spa Coach",
-  "short_name": "Spa Coach",
-  "description": "Offline virtuele coach met pacenotes voor Spa-Francorchamps in ACC.",
+  "name": "ACC Track Coach",
+  "short_name": "ACC Coach",
+  "description": "Offline virtuele coach met pacenotes voor alle ACC-circuits.",
   "start_url": ".",
   "scope": ".",
   "display": "standalone",

@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#111827">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="Spa Coach">
+  <meta name="apple-mobile-web-app-title" content="ACC Coach">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
-  <title>ACC Spa Coach</title>
+  <title>ACC Track Coach</title>
   <style>
     :root {
       color-scheme: dark;
@@ -416,8 +416,8 @@
       <div class="brand">
         <div class="app-icon" aria-hidden="true">SPA</div>
         <div>
-          <h1>ACC Spa Coach</h1>
-          <div class="subtitle">Offline pacenotes voor Spa-Francorchamps.</div>
+          <h1>ACC Track Coach</h1>
+          <div class="subtitle">Offline pacenotes voor alle ACC-circuits.</div>
         </div>
       </div>
       <div class="status-pill" id="pwaStatus">Offline klaar</div>
@@ -427,6 +427,12 @@
       <div>
         <section>
           <h2>Ronde</h2>
+          <div class="grid" style="margin-bottom:11px">
+            <label>
+              Circuit
+              <select id="track"></select>
+            </label>
+          </div>
           <div class="grid three">
             <label>
               Gem. min.
@@ -487,7 +493,7 @@
         </section>
 
         <section>
-          <h2>Spa Notes</h2>
+          <h2 id="notesTitle">Circuit Notes</h2>
           <div class="note-list" id="noteList"></div>
         </section>
       </div>
@@ -525,14 +531,14 @@
         </div>
 
         <div class="track-card">
-          <svg viewBox="0 0 520 300" role="img" aria-label="Spa track map">
+          <svg viewBox="0 0 520 300" role="img" aria-label="Circuit map">
             <path class="track-line" d="M145 252 C95 230 74 194 108 168 C134 148 181 154 201 121 C222 86 181 60 212 34 C248 4 322 22 354 54 C385 85 366 122 406 142 C458 168 465 229 413 249 C362 268 315 226 268 237 C221 248 186 270 145 252 Z"></path>
             <path id="trackProgressPath" class="track-progress" pathLength="1000" d="M145 252 C95 230 74 194 108 168 C134 148 181 154 201 121 C222 86 181 60 212 34 C248 4 322 22 354 54 C385 85 366 122 406 142 C458 168 465 229 413 249 C362 268 315 226 268 237 C221 248 186 270 145 252 Z"></path>
             <circle cx="145" cy="252" r="7" fill="#fbbf24"></circle>
             <text x="158" y="257" fill="#f6f8fa" font-size="16" font-weight="700">S/F</text>
           </svg>
         </div>
-        <div class="hint" id="coachHint">Deze eerste versie gebruikt timing. Tik Sync S/F bij elke nieuwe ronde voor betere calls.</div>
+        <div class="hint" id="coachHint">Deze coach gebruikt timing. Tik Sync S/F bij elke nieuwe ronde voor betere calls.</div>
       </section>
     </div>
   </main>
@@ -541,7 +547,7 @@
     (function () {
       "use strict";
 
-      var notes = [
+      var spaNotes = [
         {
           at: 0.015,
           corner: "La Source",
@@ -652,6 +658,350 @@
         }
       ];
 
+      function gearSet(gt3, options) {
+        options = options || {};
+        return {
+          gt3: gt3,
+          gt4: options.gt4 || Math.max(2, gt3 - 1),
+          gt2: options.gt2 || gt3,
+          cup: options.cup || Math.max(2, gt3 - 1),
+          m2: options.m2 || Math.max(2, gt3 - 1),
+          trophy: options.trophy || Math.max(2, gt3 - 1)
+        };
+      }
+
+      function n(at, corner, gt3, curb, safe, direct, attack, options) {
+        return {
+          at: at,
+          corner: corner,
+          gear: gearSet(gt3, options),
+          curb: curb,
+          safe: safe,
+          direct: direct,
+          attack: attack
+        };
+      }
+
+      var trackData = [
+        {
+          name: "Barcelona",
+          defaultLap: [1, 45],
+          notes: [
+            n(.055, "T1 Elf", 2, "Binnenkerb licht, tweede kerb voorzichtig.", "Rem vroeg bij 150. Rustig insturen.", "Rem hard, late apex T1, snel naar T2.", "Laat remmen, korte rotatie, exit vrij houden."),
+            n(.115, "T3 Renault", 4, "Binnenkerb vermijden; auto laten lopen.", "Vroege lift, vloeiende boog.", "Kleine lift, één stuurhoek vasthouden.", "Veel snelheid dragen, gas vroeg terug."),
+            n(.240, "T5 Seat", 2, "Geen kerb nodig, exit schoon houden.", "Geduld, late apex.", "Trail brake naar binnen, vroeg rechtzetten.", "Diep erin, roteren op rem los."),
+            n(.365, "T7-T8", 3, "Eerste kerb vlak pakken, tweede niet hakken.", "Netjes links-rechts.", "Kerb licht gebruiken, exit openen.", "Attack kerb, maar auto stabiel houden."),
+            n(.560, "La Caixa", 2, "Binnenkerb licht; exitkerb gebruiken.", "Rem recht, late apex.", "Laat remmen, vroeg op gas.", "Kort parkeren, hard uitaccelereren."),
+            n(.720, "Europcar", 3, "Binnenkerb niet te hard nemen.", "Rustige entry.", "Auto laten rollen, exit belangrijk.", "Veel minimumsnelheid, baanbreedte pakken."),
+            n(.875, "New Holland", 4, "Exitkerb mag; binnenkerb mijden.", "Vloeiend, niet knijpen.", "Vroeg gas, heel de baan gebruiken.", "Commit, zo min mogelijk liften.")
+          ]
+        },
+        {
+          name: "Brands Hatch",
+          defaultLap: [1, 24],
+          notes: [
+            n(.035, "Paddock Hill Bend", 4, "Binnenkerb vermijden, exitkerb licht.", "Korte lift, auto laten zakken.", "Vroeg insturen, geduld met gas.", "Commit over de top, exit volledig gebruiken."),
+            n(.150, "Druids", 2, "Geen kerb nodig.", "Rem vroeg en recht.", "Laat remmen, late apex.", "Diep erin, snel draaien, vroeg gas."),
+            n(.250, "Graham Hill", 3, "Binnenkerb licht pakken.", "Rustig op gas.", "Clip kerb, exit openen.", "Veel snelheid, exitkerb gebruiken."),
+            n(.460, "Surtees", 3, "Kerb vlak meenemen.", "Vroege apex vermijden.", "Late apex voor achterstuk.", "Hard roteren, rechte exit."),
+            n(.665, "Hawthorn", 4, "Binnenkerb mijden.", "Kleine lift, stabiel houden.", "Tik rem, insturen en dragen.", "Minimum lift, baanbreedte pakken."),
+            n(.780, "Westfield", 4, "Binnenkerb niet aanvallen.", "Vloeiend houden.", "Één stuurbeweging.", "Commit, niet corrigeren."),
+            n(.925, "Clearways", 3, "Binnenkerb licht, exit ruim.", "Wacht op grip.", "Laat apex, vroeg volgas.", "Auto recht, gas hard erop.")
+          ]
+        },
+        {
+          name: "COTA",
+          defaultLap: [2, 7],
+          notes: [
+            n(.040, "T1", 2, "Binnenkerb licht, exit breed.", "Rem vroeg bergop.", "Laat remmen, late apex.", "Diep remmen, auto scherp draaien."),
+            n(.145, "Esses", 4, "Kerbs vlak pakken, hoge sausage vermijden.", "Ritme boven aanval.", "Links-rechts vloeiend, gas moduleren.", "Kerbs gebruiken, auto levend houden."),
+            n(.300, "T11 Hairpin", 2, "Geen binnenkerb nodig.", "Rem recht, geduld.", "Late apex voor rechte stuk.", "Kort draaien, vroeg volgas."),
+            n(.510, "T12", 2, "Binnenkerb licht, exitkerb mag.", "Rem stabiel.", "Hard remmen, auto recht houden.", "Laat remmen, snel roteren."),
+            n(.600, "Stadium", 3, "Kerbs voorzichtig.", "Netjes positioneren.", "Korte apexen, exit belangrijk.", "Attack eerste kerb, tweede sparen."),
+            n(.770, "Triple Right", 4, "Binnenkerb vermijden.", "Vloeiende boog.", "Gas vasthouden met kleine lift.", "Commit, minimum snelheid hoog."),
+            n(.915, "Final Left", 3, "Binnenkerb licht, exit gebruiken.", "Rustig op gas.", "Late apex, vol naar finish.", "Veel rotatie, hard uit.")
+          ]
+        },
+        {
+          name: "Donington Park",
+          defaultLap: [1, 28],
+          notes: [
+            n(.050, "Redgate", 3, "Binnenkerb licht, exit breed.", "Rem vroeg, late apex.", "Trail naar apex, vroeg gas.", "Laat remmen, exit maximaal."),
+            n(.175, "Craner Curves", 5, "Kerbs vermijden.", "Lift als de auto licht wordt.", "Vloeiend, auto laten lopen.", "Commit, kleine lift maximaal."),
+            n(.305, "Old Hairpin", 3, "Binnenkerb vlak meenemen.", "Rustige entry.", "Kort remmen, vroeg gas.", "Veel snelheid, exitkerb pakken."),
+            n(.510, "McLeans", 3, "Binnenkerb licht.", "Niet te vroeg insturen.", "Late apex, auto recht.", "Diep remmen, snel openen."),
+            n(.650, "Coppice", 4, "Apexkerb licht; exit ruim.", "Geduld op gas.", "Late apex voor rechte stuk.", "Hard op power naar beneden."),
+            n(.875, "Melbourne Hairpin", 2, "Geen kerb nodig.", "Rem recht, stop de auto.", "Laat remmen, laat draaien.", "Kort parkeren, recht uit."),
+            n(.950, "Goddards", 2, "Binnenkerb licht.", "Schoon uitkomen.", "Late apex naar finish.", "Auto snel recht, volgas.")
+          ]
+        },
+        {
+          name: "Hungaroring",
+          defaultLap: [1, 44],
+          notes: [
+            n(.055, "T1", 2, "Binnenkerb licht, exitkerb gebruiken.", "Rem vroeg en recht.", "Laat remmen, late apex.", "Diep erin, vroeg rechtzetten."),
+            n(.170, "T2", 2, "Geen kerb forceren.", "Lang remmen, geduld.", "Trail brake, late apex.", "Roteren op rem los, grip zoeken."),
+            n(.270, "T4", 5, "Binnenkerb vermijden.", "Lift vroeg, stabiel.", "Snelle lift, één beweging.", "Commit, hele exit gebruiken."),
+            n(.405, "T6-T7 Chicane", 2, "Kerbs niet hard pakken.", "Recht remmen, rustig over kerb.", "Eerste kerb licht, tweede sparen.", "Kort en agressief, auto stabiel houden."),
+            n(.575, "T8-T9", 3, "Kerbs vlak meenemen.", "Ritme bewaren.", "Links-rechts vloeiend.", "Minimum snelheid hoog houden."),
+            n(.760, "T11", 4, "Exitkerb gebruiken.", "Kleine lift.", "Vroeg gas, baanbreedte pakken.", "Commit en laten lopen."),
+            n(.900, "Laatste bocht", 3, "Binnenkerb licht, exit ruim.", "Wacht met gas.", "Late apex, vol naar finish.", "Auto recht, gas vroeg.")
+          ]
+        },
+        {
+          name: "Imola",
+          defaultLap: [1, 43],
+          notes: [
+            n(.075, "Tamburello", 3, "Kerbs vlak pakken, hoge delen mijden.", "Rem recht, rustig links-rechts.", "Eerste kerb pakken, tweede vloeiend.", "Attack kerbs, auto stabiel houden."),
+            n(.205, "Villeneuve", 4, "Binnenkerb licht.", "Lift of tik rem.", "Snelle links-rechts, exit openen.", "Commit, minimum snelheid hoog."),
+            n(.325, "Tosa", 2, "Binnenkerb licht, exit niet te breed.", "Geduld, late apex.", "Trail naar binnen, vroeg gas.", "Diep remmen, scherp draaien."),
+            n(.475, "Piratella", 4, "Binnenkerb vermijden.", "Vloeiend insturen.", "Kleine lift, auto laten rollen.", "Veel snelheid, hele exit."),
+            n(.610, "Acque Minerali", 3, "Kerbs voorzichtig.", "Rem stabiel bergaf.", "Eerste rechts dragen, tweede laat apex.", "Hard roteren, grip op exit."),
+            n(.780, "Variante Alta", 2, "Kerbs pakken maar niet springen.", "Rustig over de kerbs.", "Recht remmen, korte rotatie.", "Attack eerste kerb, auto snel recht."),
+            n(.925, "Rivazza", 2, "Binnenkerb licht, exitkerb breed.", "Rem vroeg, geduld.", "Late apex beide links.", "Diep erin, maximaal exit.")
+          ]
+        },
+        {
+          name: "Indianapolis",
+          defaultLap: [1, 36],
+          notes: [
+            n(.060, "T1", 3, "Binnenkerb licht, exitkerb gebruiken.", "Rem recht, schoon uit.", "Late apex, vroeg gas.", "Laat remmen, exit breed."),
+            n(.185, "T4-T5", 3, "Kerbs vlak meenemen.", "Ritme vasthouden.", "Links-rechts vloeiend.", "Attack kerb zonder auto te gooien."),
+            n(.330, "Back Straight Left", 4, "Binnenkerb mijden.", "Kleine lift.", "Kort liften, snel terug gas.", "Commit, baanbreedte pakken."),
+            n(.515, "T7 Hairpin", 2, "Geen hoge binnenkerb.", "Rem vroeg en recht.", "Laat remmen, late apex.", "Kort parkeren, recht uit."),
+            n(.660, "Museum", 3, "Kerbs licht.", "Niet oversturen.", "Auto laten rollen.", "Veel minimumsnelheid."),
+            n(.825, "Final Complex", 3, "Kerbs voorzichtig.", "Netjes links-rechts.", "Vroeg positioneren voor exit.", "Kerb pakken, auto recht."),
+            n(.940, "Oval Exit", 4, "Exitkerb gebruiken.", "Gas rustig opbouwen.", "Vroeg volgas naar finish.", "Vol commitment naar banking.")
+          ]
+        },
+        {
+          name: "Kyalami",
+          defaultLap: [1, 42],
+          notes: [
+            n(.060, "Crowthorne", 2, "Binnenkerb licht, exit schoon.", "Rem vroeg, late apex.", "Hard remmen, geduld op gas.", "Diep erin, snel draaien."),
+            n(.175, "Jukskei Sweep", 4, "Binnenkerb vermijden.", "Vloeiend insturen.", "Kleine lift, auto laten lopen.", "Commit en baanbreedte gebruiken."),
+            n(.320, "Sunset", 4, "Kerb niet hard pakken.", "Lift vroeg, stabiel.", "Snelle lift, één stuurbeweging.", "Minimum lift, exit breed."),
+            n(.480, "Clubhouse", 3, "Binnenkerb licht.", "Rem recht.", "Trail naar apex, vroeg gas.", "Laat remmen, korte rotatie."),
+            n(.610, "The Esses", 3, "Kerbs vlak pakken.", "Ritme belangrijk.", "Links-rechts schoon.", "Attack maar auto niet laten springen."),
+            n(.770, "Mineshaft", 4, "Kerb mijden bij compressie.", "Auto stabiel houden.", "Kleine lift, niet corrigeren.", "Commit naar beneden."),
+            n(.905, "Ingwe", 3, "Exitkerb gebruiken.", "Late apex.", "Vroeg gas naar rechte stuk.", "Hard uitaccelereren.")
+          ]
+        },
+        {
+          name: "Laguna Seca",
+          defaultLap: [1, 23],
+          notes: [
+            n(.055, "Andretti Hairpin", 2, "Binnenkerb licht, tweede apex sparen.", "Rem vroeg, laat draaien.", "Late tweede apex, vroeg gas.", "Diep remmen, auto snel recht."),
+            n(.200, "T3", 3, "Binnenkerb licht.", "Rustige entry.", "Clip en open exit.", "Veel snelheid, exitkerb."),
+            n(.335, "T5", 3, "Binnenkerb vlak pakken.", "Wacht op gas.", "Late apex bergop.", "Hard roteren, power vroeg."),
+            n(.505, "Corkscrew", 2, "Eerste kerb licht, tweede niet springen.", "Rem recht, mik linksboven.", "Laat insturen, auto laten vallen.", "Attack entry, maar stuur rustig."),
+            n(.640, "Rainey", 4, "Geen binnenkerb.", "Lift, auto stabiel.", "Vloeiend doorrollen.", "Commit, exit breed."),
+            n(.775, "T10", 4, "Binnenkerb vermijden.", "Kleine lift.", "Tik rem, één beweging.", "Veel snelheid dragen."),
+            n(.910, "T11", 2, "Binnenkerb licht.", "Rem vroeg, rechte exit.", "Late apex naar finish.", "Kort draaien, volgas.")
+          ]
+        },
+        {
+          name: "Misano",
+          defaultLap: [1, 34],
+          notes: [
+            n(.055, "T1", 3, "Binnenkerb licht, exitkerb gebruiken.", "Rem recht.", "Laat remmen, korte apex.", "Diep erin, exit vrij."),
+            n(.150, "Rio", 2, "Kerbs voorzichtig.", "Netjes links-rechts.", "Eerste kerb licht, tweede sparen.", "Agressief roteren, auto recht."),
+            n(.310, "Quercia", 2, "Geen kerb nodig.", "Geduld, late apex.", "Trail brake, vroeg gas.", "Kort parkeren en uit."),
+            n(.475, "Tramonto", 2, "Binnenkerb licht.", "Rem recht, niet overschieten.", "Late apex naar rechte stuk.", "Laat remmen, snel recht."),
+            n(.650, "Curvone", 5, "Kerb mijden.", "Lift indien nodig.", "Volgas als stabiel.", "Commit, zachte stuurinput."),
+            n(.790, "Carro", 3, "Binnenkerb licht.", "Stabiel houden.", "Korte rem, vroeg gas.", "Attack entry, exit breed."),
+            n(.925, "Misano Final", 3, "Exitkerb gebruiken.", "Rustig openen.", "Late apex, vol naar finish.", "Hard uitaccelereren.")
+          ]
+        },
+        {
+          name: "Monza",
+          defaultLap: [1, 49],
+          notes: [
+            n(.075, "Prima Variante", 2, "Kerbs pakken, hoge delen vermijden.", "Rem vroeg bij 150.", "Hard remmen, recht over eerste kerb.", "Laat remmen, agressief maar stabiel."),
+            n(.250, "Curva Grande", 6, "Binnenkerb vermijden.", "Volgas als stabiel.", "Één stuurbeweging.", "Commit, geen correcties."),
+            n(.365, "Seconda Variante", 2, "Kerbs gebruiken, exit niet forceren.", "Rem recht, rustig over kerb.", "Eerste kerb pakken, tweede vloeiend.", "Attack kerbs, auto snel recht."),
+            n(.515, "Lesmo 1", 3, "Binnenkerb licht.", "Geduld op gas.", "Late apex, exit schoon.", "Diep erin, snel openen."),
+            n(.590, "Lesmo 2", 3, "Binnenkerb licht, exit ruim.", "Niet te vroeg gas.", "Late apex naar rechte stuk.", "Veel exit, volle baan."),
+            n(.755, "Ascari", 4, "Kerbs vlak pakken.", "Rem stabiel, ritme.", "Links clippen, rechts vloeiend, exit breed.", "Attack entry, exit maximaal."),
+            n(.925, "Parabolica", 4, "Binnenkerb vermijden, exitkerb mag.", "Vroeg remmen, lange boog.", "Trail naar late apex, vroeg gas.", "Veel snelheid, auto laten lopen.")
+          ]
+        },
+        {
+          name: "Mount Panorama",
+          defaultLap: [2, 5],
+          notes: [
+            n(.055, "Hell Corner", 2, "Binnenkerb licht.", "Rem vroeg, recht uit.", "Late apex voor Mountain Straight.", "Laat remmen, snel recht."),
+            n(.205, "Griffins Bend", 3, "Binnenkerb licht, exit muur vrij houden.", "Rustig op gas.", "Late apex, ruimte houden.", "Hard roteren, niet uitknijpen."),
+            n(.345, "The Cutting", 2, "Kerb vermijden, muur dichtbij.", "Rem vroeg, netjes klimmen.", "Geduld, korte exit.", "Diep maar veilig, tractie zoeken."),
+            n(.485, "Skyline", 3, "Kerbs vermijden.", "Auto recht over de top.", "Lift vroeg, niet corrigeren.", "Commit maar stuur zacht."),
+            n(.585, "The Esses", 2, "Kerbs zeer voorzichtig.", "Langzaam in, schoon uit.", "Ritme, auto smal houden.", "Attack pas als auto stabiel is."),
+            n(.695, "Forest Elbow", 2, "Binnenkerb licht, muur vrij.", "Geduld op gas.", "Late apex naar Conrod.", "Kort draaien, hard uit."),
+            n(.885, "The Chase", 3, "Kerbs vlak, hoge delen mijden.", "Rem recht vanaf hoge snelheid.", "Hard remmen, links-rechts schoon.", "Laat remmen, kerb precies."),
+            n(.965, "Murray's", 2, "Binnenkerb licht.", "Schoon naar finish.", "Late apex.", "Snel recht, volgas.")
+          ]
+        },
+        {
+          name: "Nurburgring",
+          defaultLap: [1, 56],
+          notes: [
+            n(.055, "Yokohama S", 2, "Kerbs licht, niet springen.", "Rem vroeg, rustig links-rechts.", "Hard remmen, tweede apex belangrijk.", "Attack eerste kerb, exit vrij."),
+            n(.210, "Mercedes Arena", 2, "Kerbs voorzichtig.", "Geduld in langzame sectie.", "Laat apexen, tractie bewaren.", "Kort draaien, power vroeg."),
+            n(.375, "Valvoline", 3, "Binnenkerb licht.", "Rem stabiel.", "Trail naar apex.", "Laat remmen, snel roteren."),
+            n(.515, "Ford Kurve", 4, "Kerb vlak meenemen.", "Vloeiend houden.", "Kleine lift, vroeg gas.", "Veel minimumsnelheid."),
+            n(.660, "Dunlop Hairpin", 2, "Binnenkerb licht, exit breed.", "Rem vroeg bergaf.", "Late apex, geduld.", "Diep erin, tractie zoeken."),
+            n(.800, "Schumacher S", 5, "Kerbs vermijden.", "Lift indien nodig.", "Volgas als stabiel.", "Commit, zachte input."),
+            n(.930, "NGK Chicane", 2, "Kerbs pakken maar recht houden.", "Rustig over kerbs.", "Hard remmen, rechte auto.", "Attack kerb, snel op gas.")
+          ]
+        },
+        {
+          name: "Nurburgring 24H",
+          defaultLap: [8, 20],
+          notes: [
+            n(.020, "GP T1", 2, "Kerbs licht.", "Rem vroeg en recht.", "Late apex, schoon uit.", "Laat remmen, korte rotatie."),
+            n(.105, "Hatzenbach", 3, "Kerbs voorzichtig.", "Ritme en rust.", "Vloeiende links-rechts.", "Attack alleen vlakke kerbs."),
+            n(.235, "Aremberg", 3, "Binnenkerb licht.", "Rem stabiel.", "Late apex naar Fuchsrohre.", "Diep erin, snel recht."),
+            n(.350, "Adenauer Forst", 2, "Kerbs niet hard.", "Rem vroeg, focus exit.", "Langzaam in, recht uit.", "Laat remmen maar exit sparen."),
+            n(.495, "Karussell", 2, "Betonkom pakken, rustig sturen.", "Vroeg in de kom.", "Auto laten rollen, gas pas bij exit.", "Strak in kom, niet te vroeg uit."),
+            n(.640, "Hohe Acht", 3, "Kerbs mijden.", "Stabiel en geduldig.", "Ritme boven aanval.", "Minimum snelheid dragen."),
+            n(.790, "Pflanzgarten", 4, "Kerbs vermijden bij sprong.", "Auto recht houden.", "Lift voor compressie.", "Commit maar stuur zacht."),
+            n(.930, "Döttinger Höhe", 6, "Geen kerb nodig.", "Vloeiend naar rechte stuk.", "Exit maximaal.", "Zo vroeg mogelijk volgas.")
+          ]
+        },
+        {
+          name: "Oulton Park",
+          defaultLap: [1, 35],
+          notes: [
+            n(.055, "Old Hall", 3, "Binnenkerb licht, exit gras mijden.", "Rem vroeg.", "Late apex, vroeg gas.", "Diep remmen, exit vrij."),
+            n(.185, "Cascades", 4, "Binnenkerb vermijden.", "Lift, auto laten rollen.", "Vloeiend naar beneden.", "Veel snelheid, niet corrigeren."),
+            n(.330, "Island Bend", 5, "Kerb mijden.", "Kleine lift.", "Commit en zacht sturen.", "Volgas als stabiel."),
+            n(.415, "Shell Oils", 2, "Binnenkerb licht.", "Rem recht, geduld.", "Late apex, tractie.", "Kort parkeren, uit."),
+            n(.620, "Hislop's", 2, "Kerbs voorzichtig.", "Recht remmen.", "Eerste kerb vlak, tweede sparen.", "Attack maar auto stil houden."),
+            n(.725, "Knickerbrook", 3, "Kerb licht.", "Rustig op gas.", "Exit openen.", "Veel minimumsnelheid."),
+            n(.900, "Lodge", 3, "Binnenkerb licht, exit breed.", "Laat apex.", "Vroeg gas naar Deer Leap.", "Hard uit over heuvel.")
+          ]
+        },
+        {
+          name: "Paul Ricard",
+          defaultLap: [1, 54],
+          notes: [
+            n(.055, "Verrerie", 3, "Kerb licht.", "Rem stabiel.", "Korte apex, exit open.", "Laat remmen, baanbreedte."),
+            n(.170, "Hotel", 2, "Binnenkerb licht.", "Geduld in hairpin.", "Late apex, tractie.", "Kort draaien, vroeg gas."),
+            n(.330, "Sainte Baume", 3, "Kerbs vlak.", "Ritme vasthouden.", "Links-rechts schoon.", "Attack kerbs zonder springen."),
+            n(.505, "Signes", 6, "Binnenkerb vermijden.", "Lift indien nodig.", "Volgas als stabiel.", "Commit, zachte input."),
+            n(.650, "Beausset", 4, "Binnenkerb mijden; exit breed.", "Lange boog, geduld.", "Trail naar late apex.", "Veel snelheid, vroeg power."),
+            n(.805, "Bendor", 3, "Kerb licht.", "Rem recht.", "Korte rotatie.", "Laat remmen, snel openen."),
+            n(.925, "Double Droite", 3, "Exitkerb gebruiken.", "Laatste apex belangrijk.", "Late apex, vol naar finish.", "Auto recht, gas hard.")
+          ]
+        },
+        {
+          name: "Red Bull Ring",
+          defaultLap: [1, 31],
+          notes: [
+            n(.060, "T1 Castrol", 3, "Binnenkerb licht, exitkerb ruim.", "Rem vroeg bergop.", "Late apex, vroeg gas.", "Laat remmen, exit gebruiken."),
+            n(.260, "T3 Remus", 2, "Geen kerb nodig.", "Rem recht, geduld.", "Late apex voor rechte stuk.", "Kort draaien, hard uit."),
+            n(.420, "T4 Schlossgold", 3, "Binnenkerb licht.", "Stabiel remmen bergaf.", "Trail naar apex.", "Laat remmen, exit breed."),
+            n(.585, "T6", 4, "Binnenkerb licht.", "Lift vroeg.", "Vloeiend insturen.", "Veel snelheid dragen."),
+            n(.700, "T7", 4, "Kerb vlak.", "Niet te veel sturen.", "Auto laten lopen.", "Commit en baanbreedte."),
+            n(.830, "Rindt", 5, "Binnenkerb vermijden.", "Kleine lift.", "Volgas als stabiel.", "Commit, zachte input."),
+            n(.930, "Red Bull Mobile", 4, "Exitkerb gebruiken.", "Laat apex.", "Vroeg gas naar finish.", "Hard uit, hele baan.")
+          ]
+        },
+        {
+          name: "Silverstone",
+          defaultLap: [1, 59],
+          notes: [
+            n(.065, "Village", 2, "Binnenkerb licht.", "Rem vroeg, geduld.", "Late apex.", "Kort draaien, tractie."),
+            n(.150, "The Loop", 2, "Geen kerb forceren.", "Langzaam in.", "Laat draaien voor Aintree.", "Vroeg recht, gas naar Wellington."),
+            n(.315, "Brooklands", 3, "Binnenkerb licht.", "Rem stabiel.", "Late apex.", "Laat remmen, exit vrij."),
+            n(.390, "Luffield", 3, "Binnenkerb vermijden.", "Geduld met gas.", "Lange late apex.", "Minimum snelheid, vroeg power."),
+            n(.555, "Copse", 5, "Binnenkerb licht of mijden.", "Lift indien nodig.", "Volgas als stabiel.", "Commit, exit breed."),
+            n(.690, "Maggotts-Becketts", 5, "Kerbs vlak, hoge delen mijden.", "Ritme boven attack.", "Vloeiende links-rechts, lift doseren.", "Attack ritme, auto stabiel."),
+            n(.870, "Stowe", 4, "Binnenkerb licht.", "Rem op bord, late apex.", "Korte rem, vroeg gas.", "Laat remmen, exit breed."),
+            n(.955, "Club", 3, "Kerbs licht, exit gebruiken.", "Rustig door complex.", "Late laatste apex.", "Hard uit naar finish.")
+          ]
+        },
+        {
+          name: "Snetterton",
+          defaultLap: [1, 50],
+          notes: [
+            n(.045, "Riches", 4, "Binnenkerb licht.", "Lift vroeg.", "Kleine lift, doorrollen.", "Veel minimumsnelheid."),
+            n(.165, "Wilson", 2, "Binnenkerb licht.", "Rem recht.", "Late apex, tractie.", "Laat remmen, snel draaien."),
+            n(.290, "Palmer", 3, "Kerb licht.", "Vloeiend.", "Korte rem, open exit.", "Attack apex, exit breed."),
+            n(.430, "Agostini", 2, "Geen kerb nodig.", "Geduld, late apex.", "Kort parkeren, recht uit.", "Diep remmen, hard uit."),
+            n(.600, "Hamilton", 4, "Kerb mijden.", "Lift indien nodig.", "Één stuurbeweging.", "Commit."),
+            n(.760, "Bomb Hole", 4, "Binnenkerb vermijden.", "Auto stabiel houden.", "Kleine lift.", "Veel snelheid dragen."),
+            n(.900, "Murrays", 3, "Kerbs licht.", "Netjes naar finish.", "Late apex.", "Hard uit.")
+          ]
+        },
+        { name: "Spa-Francorchamps", defaultLap: [2, 22], notes: spaNotes },
+        {
+          name: "Suzuka",
+          defaultLap: [2, 2],
+          notes: [
+            n(.050, "T1-T2", 3, "Binnenkerb licht, tweede apex belangrijk.", "Rem vroeg, geduld.", "Trail naar T2, vroeg gas.", "Laat remmen, T2 exit sparen."),
+            n(.180, "Esses", 4, "Kerbs vlak, ritme houden.", "Vloeiend, niet forceren.", "Links-rechts met ritme.", "Attack ritme, minimum snelheid."),
+            n(.315, "Degner 1", 4, "Binnenkerb mijden.", "Lift vroeg.", "Korte rem, één beweging.", "Veel snelheid, exit vrij."),
+            n(.375, "Degner 2", 3, "Binnenkerb licht.", "Rem recht.", "Late apex.", "Kort draaien, vroeg gas."),
+            n(.535, "Hairpin", 2, "Geen kerb nodig.", "Rem vroeg, geduld.", "Late apex, tractie.", "Kort parkeren, recht uit."),
+            n(.705, "Spoon", 3, "Binnenkerb licht, exit ruim.", "Geduld tussen apexen.", "Late tweede apex voor rechte stuk.", "Veel snelheid, vroeg power."),
+            n(.875, "130R", 6, "Binnenkerb vermijden.", "Lift als nodig.", "Volgas als stabiel.", "Commit, zachte input."),
+            n(.955, "Casio Triangle", 2, "Kerbs pakken maar recht houden.", "Rem recht.", "Eerste kerb vlak, snel links.", "Attack chicane, auto recht.")
+          ]
+        },
+        {
+          name: "Valencia",
+          defaultLap: [1, 33],
+          notes: [
+            n(.055, "T1", 3, "Binnenkerb licht.", "Rem recht, schoon exit.", "Korte apex, vroeg gas.", "Laat remmen, exit breed."),
+            n(.175, "T4", 2, "Kerb licht.", "Geduld in langzame bocht.", "Late apex, tractie.", "Kort draaien, hard uit."),
+            n(.310, "T6", 3, "Kerbs vlak.", "Ritme bewaren.", "Links-rechts schoon.", "Attack maar stabiel."),
+            n(.465, "T8 Hairpin", 2, "Geen kerb nodig.", "Rem recht.", "Late apex voor tractie.", "Diep erin, recht uit."),
+            n(.610, "T10", 4, "Binnenkerb licht.", "Vloeiend.", "Kleine lift.", "Veel snelheid dragen."),
+            n(.770, "T12", 3, "Kerb licht.", "Rem stabiel.", "Korte rotatie.", "Laat remmen, exit open."),
+            n(.920, "Final Corner", 3, "Exitkerb gebruiken.", "Wacht met gas.", "Late apex naar finish.", "Hard uitaccelereren.")
+          ]
+        },
+        {
+          name: "Watkins Glen",
+          defaultLap: [1, 46],
+          notes: [
+            n(.055, "T1", 3, "Binnenkerb licht, exitkerb gebruiken.", "Rem vroeg, niet wijd lopen.", "Late apex, vroeg gas.", "Laat remmen, exit maximaal."),
+            n(.205, "Esses", 5, "Kerbs vermijden.", "Volgas als stabiel.", "Eén vloeiende lijn.", "Commit omhoog, geen lift."),
+            n(.375, "Bus Stop", 4, "Kerbs vlak pakken, hoge delen mijden.", "Rem recht.", "Attack eerste kerb, auto recht.", "Laat remmen, kerb precies."),
+            n(.500, "Outer Loop", 4, "Binnenkerb mijden.", "Lange boog, geduld.", "Gas vasthouden, exit breed.", "Veel minimumsnelheid."),
+            n(.655, "Laces", 3, "Binnenkerb licht.", "Rem stabiel.", "Late apex.", "Kort draaien, vroeg gas."),
+            n(.810, "Toe", 3, "Exitkerb gebruiken.", "Geduld op gas.", "Late apex voor rechte stuk.", "Hard uitaccelereren."),
+            n(.930, "Final Turn", 4, "Binnenkerb licht, exit breed.", "Kleine lift.", "Vroeg gas naar finish.", "Commit, hele baan.")
+          ]
+        },
+        {
+          name: "Zandvoort",
+          defaultLap: [1, 39],
+          notes: [
+            n(.055, "Tarzan", 2, "Binnenkerb licht, exit breed.", "Rem vroeg, late apex.", "Hard remmen, tractie.", "Laat remmen, snel recht."),
+            n(.190, "Hugenholtz", 3, "Binnenkerb niet hard.", "Rustig op banking.", "Laat rollen, gas op banking.", "Veel snelheid, exit vrij."),
+            n(.320, "Scheivlak", 5, "Kerb vermijden.", "Lift vroeg, stabiel.", "Snelle lift, één beweging.", "Commit met zachte stuurinput."),
+            n(.485, "Masters", 3, "Kerbs licht.", "Netjes links-rechts.", "Ritme, exit openen.", "Attack maar auto kalm."),
+            n(.620, "Hans Ernst", 2, "Kerbs pakken maar niet springen.", "Rem recht.", "Eerste kerb vlak, tweede sparen.", "Attack chicane, recht uit."),
+            n(.785, "Kumho", 3, "Binnenkerb licht.", "Geduld met gas.", "Late apex.", "Hard uit naar Arie."),
+            n(.925, "Arie Luyendyk", 5, "Binnenkerb mijden; exit breed.", "Volgas als stabiel.", "Vroeg gas op banking.", "Commit vol naar finish.")
+          ]
+        },
+        {
+          name: "Zolder",
+          defaultLap: [1, 31],
+          notes: [
+            n(.060, "Eerste Linkse", 3, "Binnenkerb licht.", "Rem stabiel.", "Korte apex, exit open.", "Laat remmen, breed uit."),
+            n(.185, "Kanaalbocht", 4, "Kerb mijden.", "Lift indien nodig.", "Vloeiende boog.", "Commit, niet corrigeren."),
+            n(.315, "Kleine Chicane", 2, "Kerbs voorzichtig.", "Rem recht, rustig over kerb.", "Eerste kerb vlak, tweede sparen.", "Attack maar auto stil."),
+            n(.470, "Bolderberg", 3, "Binnenkerb licht.", "Geduld op gas.", "Late apex.", "Kort draaien, vroeg power."),
+            n(.620, "Terlamenbocht", 3, "Exitkerb gebruiken.", "Vloeiend openen.", "Late apex.", "Hard uitaccelereren."),
+            n(.780, "Jacky Ickx", 4, "Binnenkerb licht.", "Kleine lift.", "Eén stuurbeweging.", "Veel snelheid dragen."),
+            n(.925, "Laatste Chicane", 2, "Kerbs pakken maar auto recht.", "Rem vroeg, schoon uit.", "Hard remmen, rechte auto.", "Attack kerb, vroeg gas.")
+          ]
+        }
+      ];
+
       var cars = [
         ["Alpine A110 GT4", "gt4"], ["Aston Martin Vantage AMR GT3 2019", "gt3"],
         ["Aston Martin Vantage AMR GT3 Evo 2024", "gt3"], ["Aston Martin Vantage GT4", "gt4"],
@@ -692,13 +1042,14 @@
         spoken: {}
       };
 
+      var notes = spaNotes;
       var els = {};
       var ids = [
-        "lapMin", "lapSec", "leadSec", "car", "coachStyle", "learnLap", "voiceOn",
+        "track", "lapMin", "lapSec", "leadSec", "car", "coachStyle", "learnLap", "voiceOn",
         "repeatCall", "startBtn", "syncBtn", "pauseBtn", "earlierBtn", "laterBtn",
         "prevBtn", "nextBtn", "sayBtn", "resetBtn", "phaseLabel", "cornerName",
         "callText", "afterCorner", "lapProgress",
-        "lapCount", "elapsedTime", "nextIn", "noteList", "coachHint",
+        "lapCount", "elapsedTime", "nextIn", "noteList", "notesTitle", "coachHint",
         "pwaStatus", "trackProgressPath"
       ];
 
@@ -717,6 +1068,18 @@
 
       function leadMs() {
         return Math.max(2, numberValue("leadSec", 6)) * 1000;
+      }
+
+      function fillTracks() {
+        trackData.forEach(function (track, index) {
+          var option = document.createElement("option");
+          option.value = String(index);
+          option.textContent = track.name;
+          els.track.appendChild(option);
+        });
+        els.track.value = String(trackData.findIndex(function (track) {
+          return track.name === "Spa-Francorchamps";
+        }));
       }
 
       function fillCars() {
@@ -739,9 +1102,34 @@
         return selected[0];
       }
 
+      function selectedTrack() {
+        return trackData[Number(els.track.value)] || trackData[0];
+      }
+
+      function firstNote() {
+        return notes[0];
+      }
+
+      function setLapFromTrack(track) {
+        els.lapMin.value = track.defaultLap[0];
+        els.lapSec.value = track.defaultLap[1];
+      }
+
+      function setActiveTrack(useDefaultLap) {
+        var track = selectedTrack();
+        notes = track.notes;
+        state.activeIndex = 0;
+        state.spoken = {};
+        if (useDefaultLap) setLapFromTrack(track);
+        els.notesTitle.textContent = track.name + " Notes";
+        renderNotes();
+        resetCoach();
+      }
+
       function saveSettings() {
         try {
           var settings = {
+            track: els.track.value,
             lapMin: els.lapMin.value,
             lapSec: els.lapSec.value,
             leadSec: els.leadSec.value,
@@ -760,7 +1148,7 @@
       function loadSettings() {
         try {
           var saved = JSON.parse(localStorage.getItem(settingsKey) || "{}");
-          ["lapMin", "lapSec", "leadSec", "car", "coachStyle"].forEach(function (id) {
+          ["track", "lapMin", "lapSec", "leadSec", "car", "coachStyle"].forEach(function (id) {
             if (saved[id] !== undefined && els[id]) els[id].value = saved[id];
           });
           ["learnLap", "voiceOn", "repeatCall"].forEach(function (id) {
@@ -902,6 +1290,7 @@
       }
 
       function startCoach() {
+        var first = firstNote();
         state.running = true;
         state.paused = false;
         state.lapStartedAt = Date.now();
@@ -911,7 +1300,7 @@
         state.spoken = {};
         els.phaseLabel.textContent = "Volgende bocht";
         updateDisplay(Date.now(), false);
-        speak("Coach gestart. La Source komt eraan.", false);
+        speak("Coach gestart. " + first.corner + " komt eraan.", false);
       }
 
       function syncLap() {
@@ -936,7 +1325,7 @@
         state.lapNumber += 1;
         state.spoken = {};
         updateDisplay(now, false);
-        speak("Nieuwe ronde. La Source.", false);
+        speak("Nieuwe ronde. " + firstNote().corner + ".", false);
       }
 
       function pauseCoach() {
@@ -967,14 +1356,14 @@
         els.pauseBtn.textContent = "Pauze";
         if ("speechSynthesis" in window) window.speechSynthesis.cancel();
         els.phaseLabel.textContent = "Volgende bocht";
-        els.cornerName.textContent = "La Source";
+        els.cornerName.textContent = firstNote().corner;
         els.callText.textContent = "Tik Start S/F als je de lijn passeert.";
-        els.afterCorner.textContent = "Eau Rouge";
+        els.afterCorner.textContent = notes[afterIndex(0)].corner;
         updateDisplay(Date.now(), true);
         els.phaseLabel.textContent = "Volgende bocht";
-        els.cornerName.textContent = "La Source";
+        els.cornerName.textContent = firstNote().corner;
         els.callText.textContent = "Tik Start S/F als je de lijn passeert.";
-        els.afterCorner.textContent = "Eau Rouge";
+        els.afterCorner.textContent = notes[afterIndex(0)].corner;
       }
 
       function bind() {
@@ -990,6 +1379,10 @@
           });
         });
 
+        els.track.addEventListener("change", function () {
+          setActiveTrack(true);
+          saveSettings();
+        });
         els.startBtn.addEventListener("click", startCoach);
         els.syncBtn.addEventListener("click", syncLap);
         els.pauseBtn.addEventListener("click", pauseCoach);
@@ -1022,11 +1415,11 @@
 
       function init() {
         ids.forEach(function (id) { els[id] = document.getElementById(id); });
+        fillTracks();
         fillCars();
         loadSettings();
-        renderNotes();
+        setActiveTrack(false);
         bind();
-        resetCoach();
         tick();
 
         if ("serviceWorker" in navigator) {
